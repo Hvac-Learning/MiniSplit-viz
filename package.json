@@ -1,0 +1,8 @@
+{
+  "name": "minisplit-viz",
+  "private": true,
+  "description": "Educational mini-split refrigeration cycle animation. No dependencies.",
+  "scripts": {
+    "test": "node --test"
+  }
+}

@@ -14,12 +14,12 @@
   .bar{display:flex;flex-wrap:wrap;gap:14px;margin:12px 0;align-items:center}
   .seg{display:flex;border:2px solid var(--navy);border-radius:8px;overflow:hidden}
   button{font-weight:700;font-size:15px;font-family:inherit;background:var(--navy);color:#fff;border:0;padding:10px 16px;cursor:pointer}
-  button[aria-pressed="true"]{background:var(--yel);color:var(--navy)}
+  button[aria-pressed="true"],button[data-paused="true"]{background:var(--yel);color:var(--navy)}
   button:focus-visible{outline:3px solid #fff;outline-offset:-3px}
   .tool{border:2px solid var(--navy);border-radius:8px}
   .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
   .stat{background:#121c2e;border-left:4px solid var(--yel);padding:8px 10px;border-radius:4px}
-  .stat b{display:block;font-size:18px}.stat span{font-size:12px;opacity:.8}
+  .stat b{display:block;font-size:18px}.stat span{font-size:12px;opacity:.85}
   .flag{margin:12px 0 0;padding:10px 12px;border-left:6px solid;border-radius:4px;font-weight:700;font-size:16px;line-height:1.35}
   .flag.ok{background:#12301f;border-color:#3ddc84}
   .flag.warn{background:#3a2e08;border-color:#f5b82a}
@@ -30,11 +30,13 @@
   .foot ul{padding-left:20px;margin:6px 0}
   .tag{font:700 12px Arial,sans-serif;fill:#fff;paint-order:stroke;stroke:#0b1220;stroke-width:3}
   .lbl{font:700 12px Arial,sans-serif;fill:#fff;paint-order:stroke;stroke:#0b1220;stroke-width:3}
+  .dir{fill:#fff;stroke:#0b1220;stroke-width:1.5;stroke-linejoin:round}
+  @media (max-width:600px){button{padding:10px 12px;font-size:14px}.bar{gap:10px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-<svg id="s" viewBox="0 0 1000 640" role="img" aria-label="Animated, simplified conceptual mini-split refrigerant circuit">
+<svg id="s" viewBox="0 0 1000 640" role="img" aria-label="Animated, simplified conceptual mini-split refrigerant circuit. Not an exact service schematic.">
 <defs>
   <pattern id="sd" width="10" height="22" patternUnits="userSpaceOnUse"><rect width="10" height="22" fill="#2a3b50"/><rect y="19" width="10" height="3" fill="#1a2738"/></pattern>
   <linearGradient id="gOC" gradientUnits="userSpaceOnUse" x1="0" y1="465" x2="0" y2="300"><stop offset="0"/><stop offset="1"/></linearGradient>
@@ -64,12 +66,12 @@
   <g fill="#dfe6ee" opacity=".38"><ellipse cx="170" cy="382" rx="36" ry="14"/><ellipse cx="170" cy="382" rx="36" ry="14" transform="rotate(120 140 382)"/><ellipse cx="170" cy="382" rx="36" ry="14" transform="rotate(240 140 382)"/></g>
   <circle cx="140" cy="382" r="9" fill="#9aa6b4"/></g>
 
-<!-- Compressor + accumulator -->
+<!-- Compressor + accumulator (accumulator is conceptual, not verified for this model) -->
 <g id="comp"><rect x="285" y="380" width="60" height="155" rx="14" fill="#2b3340" stroke="#555f6e" stroke-width="2"/>
   <rect x="285" y="425" width="60" height="42" fill="#c8672a"/><rect x="305" y="470" width="20" height="55" fill="#8a94a3"/></g>
 <rect x="375" y="440" width="30" height="95" rx="9" fill="#7ec3e8" opacity=".45" stroke="#cfe9f7" stroke-width="2"/>
 
-<!-- Reversing valve -->
+<!-- Reversing valve: redirects flow only, no expansion -->
 <rect x="280" y="288" width="100" height="24" rx="8" fill="#e0a040" stroke="#7a4d10" stroke-width="2"/>
 <rect id="spool" x="290" y="294" width="30" height="12" rx="4" fill="#4a2f08"/>
 
@@ -77,8 +79,9 @@
 <circle id="eev" cx="420" cy="555" r="16" fill="#1a1a1a" stroke="#f5e12a" stroke-width="4"/>
 <rect x="412" y="533" width="16" height="10" fill="#333"/>
 
+<g id="dirs"></g>
 <g id="air"></g>
-<g id="tags"><text id="tA" class="tag" x="396" y="280"></text><text id="tB" class="tag" x="598" y="36"></text></g>
+<g id="tags"><text id="tOut" class="tag" x="48" y="282"></text><text id="tIn" class="tag" x="598" y="36"></text></g>
 
 <!-- Piping status banner (text set from script) -->
 <g id="warn" display="none"><rect id="warnBg" x="10" y="10" width="510" height="34" rx="6" stroke="#fff" stroke-width="2"/>
@@ -94,16 +97,17 @@
     <rect x="14" y="84" width="46" height="9" rx="4" fill="#6ec6f0"/><text x="70" y="93">Low-pressure vapor (from evaporator)</text></g>
   <text x="14" y="112" font-family="Arial" font-size="10.5" fill="#333">Temperature, superheat and subcooling vary with conditions.</text></g>
 
-<text x="765" y="624" text-anchor="middle" font-family="Arial" font-size="12" fill="#1c2430">Simplified conceptual circuit. Line lengths not to scale.</text>
+<text x="765" y="624" text-anchor="middle" font-family="Arial" font-size="11" fill="#1c2430">Simplified conceptual circuit. Not to scale. Flow animation is illustrative.</text>
 
 <g id="labels" display="none">
-  <text class="lbl" x="315" y="574" text-anchor="middle">Compressor</text>
-  <text class="lbl" x="150" y="286" text-anchor="middle">Outdoor coil</text>
+  <text class="lbl" x="315" y="583" text-anchor="middle">Compressor</text>
+  <text class="lbl" x="296" y="352" text-anchor="end">Discharge</text>
+  <text class="lbl" x="364" y="352">Suction</text>
+  <text class="lbl" x="330" y="278" text-anchor="middle">Reversing valve</text>
+  <text class="lbl" x="412" y="490">Accumulator</text>
   <text class="lbl" x="420" y="580" text-anchor="middle">Expansion device</text>
-  <text class="lbl" x="480" y="200" text-anchor="end">Gas line</text>
-  <text class="lbl" x="585" y="225">Liquid line</text>
-  <text class="lbl" x="330" y="338" text-anchor="middle">Reversing valve</text>
-  <text class="lbl" x="800" y="28" fill="#fff">Indoor coil</text>
+  <text class="lbl" x="455" y="200" text-anchor="end">Gas line</text>
+  <text class="lbl" x="595" y="225">Liquid line</text>
 </g>
 </svg>
 
@@ -118,7 +122,7 @@
     <button data-sc="long" aria-pressed="false">Too long · 75 ft</button>
   </div>
   <button class="tool" id="bLab" aria-pressed="false">Labels</button>
-  <button class="tool" id="bPause" aria-pressed="false">Pause</button>
+  <button class="tool" id="bPause" data-paused="false">Pause animation</button>
 </div>
 <div class="stats">
   <div class="stat"><b id="rDis">–</b><span>Compressor discharge (pressure not modeled)</span></div>
@@ -126,13 +130,15 @@
   <div class="stat"><b id="rDP">–</b><span>Gas-line pressure drop</span></div>
   <div class="stat"><b id="rCap">–</b><span id="rCapN">Capacity</span></div>
   <div class="stat"><b id="rChg">–</b><span>Additional R-32 for piping length</span></div>
+  <div class="stat"><b id="rFac">–</b><span>Factory R-32 charge (manufacturer value, separate from the additional charge)</span></div>
 </div>
 <div id="flag" class="flag"></div>
-<div id="msg" aria-live="polite"><p id="mMode"></p><p id="mSc"></p></div>
+<div id="msg" aria-live="polite"><p id="mMode"></p><p id="mSc"></p><p id="mNote"></p></div>
 
 <section class="foot">
-  <p><b>Educational use only.</b> This is a simplified conceptual heat-pump circuit, not the actual internal piping of the unit. It is not a substitute for the manufacturer's installation manual, service information, or required commissioning procedures. Pressures, temperatures and field capacity are not modeled because they depend on operating conditions.</p>
-  <p><b>Manufacturer specifications used</b> (RXT12AVJU9 outdoor / FTXV12AVJU9 indoor, Daikin AURORA R-32, 1 ton): piping length 10 ft (3 m) suggested minimum to 65 5/8 ft (20 m) maximum; maximum vertical separation 49 1/4 ft (15 m); factory-charge piping allowance 49 1/4 ft (15 m); additional 0.22 oz/ft (20 g/m) beyond that; factory charge 1.74 lb; rated piping length 25 ft; liquid pipe 1/4 in, gas pipe 3/8 in. The submittal sheet rounds the maximum to 66 ft; this page uses 65 5/8 ft.</p>
+  <p><b>Educational use only.</b> This is a simplified conceptual heat-pump circuit, not the unit's service schematic. It is not a substitute for the manufacturer's installation manual, service information, or required commissioning procedures. Pressures, temperatures, superheat, subcooling, mass flow and field capacity are not modeled because they depend on operating conditions.</p>
+  <p><b>Unverified circuit details:</b> the two Daikin documents below contain no refrigerant-circuit diagram, so the exact reversing-valve ports, the number and position of expansion devices and any check valves, the accumulator, and the liquid routing in heating mode are not verified for this model. They are drawn conceptually.</p>
+  <p><b>Manufacturer specifications used</b> (RXT12AVJU9 outdoor / FTXV12AVJU9 indoor, Daikin AURORA R-32, 1 ton): piping length 10 ft (3 m) suggested minimum to 65 5/8 ft (20 m) maximum; maximum vertical separation 49 1/4 ft (15 m); factory-charge piping allowance 49 1/4 ft (15 m); additional 0.22 oz/ft (20 g/m) beyond that; factory charge 1.74 lb; rated piping length 25 ft; liquid pipe 1/4 in, gas pipe 3/8 in. The manufacturer rounds its imperial and metric numbers (the submittal sheet prints 66 ft); this page uses the installation manual's 65 5/8 ft.</p>
   <p><b>Sources</b></p>
   <ul>
     <li><a href="https://www.daikinac.com/docs/default-source/fdma/im-rxp-09-12-avju9.pdf" target="_blank" rel="noopener">Daikin Room Air Conditioner Installation Manual, R32 Split Series (document 3P740832-4K; covers RXT12AVJU9 among other models)</a>: piping limits, additional charge, suggested 10 ft minimum.</li>
@@ -141,68 +147,47 @@
 </section>
 </div>
 
+<script src="logic.js"></script>
 <script>
-/* ===== MANUFACTURER SPECIFICATIONS (documented values, not simulated) =====
-   Sources: Daikin installation manual 3P740832-4K (piping limits, charge, 10 ft suggested minimum)
-   and Daikin submittal sheet FTXV12AVJU9-RXT12AVJU9 (ratings, rated piping length, pipe sizes). */
-const SPEC = {
-  minFt:10,              // suggested shortest piping length (noise/vibration), manual
-  maxFt:65.625,          // 65 5/8 ft max total piping length; sheet rounds to 66
-  maxVertFt:49.25,       // 49 1/4 ft max vertical separation
-  factoryPipeFt:49.25,   // piping length covered by factory charge
-  ozPerFt:0.22,          // additional R-32 per ft beyond the factory-charge piping
-  ratedFt:25,            // published rated piping length
-  factoryLb:1.74,
-  ratedCoolBtuh:10600, ratedCoolCond:'indoor 80/67 °F DB/WB, outdoor 95/75 °F DB/WB',
-  ratedHeatBtuh:13500, ratedHeatCond:'indoor 70/60 °F DB/WB, outdoor 47/43 °F DB/WB'
-};
-const OUT_OF_SPEC = 'Not calculated: outside approved piping limits';
+/* Manufacturer specifications and the charge calculation live in logic.js (SPEC, evaluatePiping).
+   This script only draws and animates; the values below are visual-only. */
+const {SPEC, SCENARIOS, NOT_CALCULATED, evaluatePiping, getModeState} = MiniSplitLogic;
 
-/* Additional charge in oz, or null when the length exceeds the permitted maximum. */
-function extraChargeOz(ft){
-  if(ft>SPEC.maxFt) return null;
-  return Math.max(0,ft-SPEC.factoryPipeFt)*SPEC.ozPerFt;
-}
-const pipingStatus = ft => ft<SPEC.minFt?'below' : ft>SPEC.maxFt?'above' : 'ok';
-
-/* ===== TEACHING SCENARIOS (ft is the scenario length; the rest is visual-only) ===== */
-const SC = {
-  short:{ft:8,  k:0, a:0,  dash:'2 6'},    // k/a: number/width of drawn zig-zags, not to scale
-  good: {ft:25, k:2, a:14, dash:'2 14'},
-  long: {ft:75, k:6, a:20, dash:'2 22'}
-};
-const SPEED = 60;   // visual flow speed, same for every scenario
+/* Drawn zig-zag count (k) and width (a) make a longer scenario look longer; not to scale. */
+const VIS = {short:{k:0,a:0}, good:{k:2,a:14}, long:{k:6,a:20}};
+const DASH = '2 14', SPEED = 60;   // same flow-dash pattern and speed for every scenario; illustrative only
 
 const MSG_MODE = {
-  cool:'Cooling: the indoor coil is the evaporator (absorbs heat) and the outdoor coil is the condenser. The gas line carries low-pressure vapor back toward the compressor (a suction line). In this simplified drawing the expansion device is outdoors, so the liquid line carries the cold low-pressure liquid-vapor mixture to the indoor coil.',
-  heat:'Heating: the reversing valve flips, so the indoor coil is the condenser (releases heat) and the outdoor coil is the evaporator. The gas line now carries hot high-pressure vapor (a discharge line) and the liquid line carries high-pressure liquid toward the expansion device. Gas-line pressure-drop effects differ between cooling and heating and are not assumed equal.'
+  cool:'Cooling: the compressor raises the refrigerant pressure. Hot high-pressure vapor goes through the reversing valve to the outdoor coil (condenser), which rejects heat outdoors. The expansion device drops the pressure, and the cold low-pressure refrigerant absorbs indoor heat in the indoor coil (evaporator). Vapor returns through the reversing valve to compressor suction.',
+  heat:'Heating: the reversing valve only redirects the flow; it does not expand the refrigerant. Discharge vapor now goes to the indoor coil (condenser), which releases heat indoors. After the expansion device, the outdoor coil (evaporator) absorbs outdoor heat. Compressor discharge is still the high side and suction the low side; the gas line changes from a suction line (cooling) to a discharge line (heating).'
 };
 const MSG_SC = {
   short:'Manufacturer: Daikin suggests a shortest piping length of 10 ft (3 m) to avoid outdoor-unit noise and vibration; actual noise and vibration depend on how the unit is installed and its environment. This 8 ft case is below that. The drawing shows a shorter line only as a concept and does not predict any specific failure.',
   good:'Manufacturer: 25 ft is Daikin\'s published rated piping length and is inside the permitted 10 ft to 65 5/8 ft range. It is below the 49 1/4 ft factory-charge allowance, so no additional refrigerant is needed for piping length alone. Actual capacity, pressures, temperatures and efficiency depend on operating conditions.',
   long:'Manufacturer: the maximum total piping length is 65 5/8 ft (20 m), and adding refrigerant does not make an overlength installation compliant. General principle: excessive piping can add pressure drop and complicate refrigerant management and oil return, depending on piping arrangement and operating conditions. No pressure, capacity or charge values are calculated for this case.'
 };
+const MSG_NOTE = 'Not modeled: pressure, temperature, superheat, subcooling, mass flow, capacity and efficiency. The animation shows flow direction and refrigerant state only; its speed is illustrative.';
 const FLAG = {
-  below:{cls:'warn', txt:'WARNING: BELOW THE 10 ft SUGGESTED MINIMUM PIPING LENGTH', svg:'BELOW 10 ft SUGGESTED MINIMUM PIPING LENGTH', fill:'#9a6a00'},
-  ok:   {cls:'ok',   txt:'Within the manufacturer\'s permitted piping range (10 ft to 65 5/8 ft)'},
-  above:{cls:'bad',  txt:'OUTSIDE MANUFACTURER SPECIFICATIONS \u2014 DO NOT INSTALL AS SHOWN', svg:'OUTSIDE MANUFACTURER SPECIFICATIONS \u2014 DO NOT INSTALL AS SHOWN', fill:'#b00020'}
+  'below-minimum':{cls:'warn', txt:'WARNING: BELOW THE 10 ft SUGGESTED MINIMUM PIPING LENGTH', svg:'BELOW 10 ft SUGGESTED MINIMUM PIPING LENGTH', fill:'#9a6a00'},
+  'compliant':    {cls:'ok',   txt:'Within the manufacturer\'s permitted piping range (10 ft to 65 5/8 ft)'},
+  'over-maximum': {cls:'bad',  txt:'OUTSIDE MANUFACTURER SPECIFICATIONS \u2014 DO NOT INSTALL AS SHOWN', svg:'OUTSIDE MANUFACTURER SPECIFICATIONS \u2014 DO NOT INSTALL AS SHOWN', fill:'#b00020'}
 };
 
-/* ===== VISUAL SETTINGS ===== */
-/* Refrigerant-state colors: hpV compressor discharge vapor, hpL condenser liquid,
-   lpL post-expansion liquid-vapor mixture, lpV evaporator outlet vapor. */
+/* Refrigerant-state colors: hpV discharge vapor, hpL condenser liquid,
+   lpL liquid-vapor mixture after expansion, lpV evaporator outlet vapor. */
 const C = {hpV:'#8a0f12', hpL:'#ff2a1f', lpL:'#2a3fb0', lpV:'#6ec6f0'};
 const $ = id => document.getElementById(id), NS = 'http://www.w3.org/2000/svg';
-let mode='cool', shown='cool', sc='good', paused=false;
+let mode='cool', shown='cool', sc='good', paused=false, modeTimer=null;
 
 /* line-set path with k back-and-forth loops so a longer scenario is drawn longer (not to scale) */
 const zig=(x,y0,y1,k,a)=>{let d=`H${x}`,cur=y0;if(!k)return d+`V${y1}`;const s=(y0-y1)/(2*k+2);
   for(let i=0;i<k;i++){cur-=s;d+=`V${cur}H${x+a}`;cur-=s;d+=`V${cur}H${x-a}`;}return d+`H${x}V${y1}`;};
+/* Pipe ends run a few px under the component drawn on top so every tube visibly connects. */
 const PATHS = {
-  A:'M310,380V312',                                                   // discharge -> reversing valve
-  OC:'M280,300H60V355H220V410H60V465H220H250V555H404',                // RV -> outdoor coil -> expansion device
+  A:'M310,392V300',                                                   // compressor discharge -> reversing valve
+  OC:'M292,300H60V355H220V410H60V465H220H250V555H412',                // reversing valve -> outdoor coil -> expansion device
   G:'M590,125H925V98H605V71H925V45H585',                              // indoor coil
-  J:'M355,312V400H390V520H350'                                        // RV -> accumulator -> compressor
+  J:'M355,300V400H390V520H338'                                        // reversing valve -> accumulator -> compressor suction
 };
 const FILL = {A:C.hpV, OC:'url(#gOC)', G:'url(#gG)', J:C.lpV, F:C.lpL, H:C.lpV};
 const P = {};
@@ -212,12 +197,17 @@ function mkPipe(k){
   u.setAttribute('stroke','rgba(0,0,0,.4)'); u.setAttribute('stroke-width',15);
   t.setAttribute('stroke',FILL[k]); t.setAttribute('stroke-width',10);
   f.setAttribute('stroke','#fff'); f.setAttribute('stroke-opacity',.75); f.setAttribute('stroke-width',3.5); f.setAttribute('stroke-linecap','round');
+  f.setAttribute('stroke-dasharray',DASH);
   $('pipes').appendChild(g);
   P[k]={u,t,f,dir:1,tdir:1,off:0};
 }
 ['OC','G','A','J','F','H'].forEach(mkPipe);
 for(const k in PATHS) setD(k,PATHS[k]);
 function setD(k,d){const p=P[k];p.u.setAttribute('d',d);p.t.setAttribute('d',d);p.f.setAttribute('d',d);}
+
+/* static flow-direction arrows: [x, y, angle in cooling, angle in heating] (0=right, 90=down, 180=left, 270=up) */
+const DIRS=[[310,345,270,270],[390,425,90,90],[170,300,180,0],[250,510,90,270],[430,300,180,0],[500,555,0,180],[760,125,0,180]]
+  .map(([x,y,c,h])=>{const p=document.createElementNS(NS,'path');p.setAttribute('d','M-7,-6L7,0L-7,6Z');p.setAttribute('class','dir');$('dirs').appendChild(p);return {x,y,c,h,el:p};});
 
 /* air arrows */
 const arrows=[];
@@ -227,64 +217,68 @@ const arrows=[];
 arrows.forEach(a=>{const p=document.createElementNS(NS,'path');p.setAttribute('d','M-6,-14H6V0H12L0,16L-12,0H-6Z');$('air').appendChild(p);a.el=p;});
 
 function grad(id,[c0,c1]){const s=$(id).children;s[0].setAttribute('stop-color',c0);s[1].setAttribute('stop-color',c1);}
-function setFill(k,c){P[k].t.setAttribute('stroke',c);}
 
 function build(){ // line-set geometry for chosen scenario
-  const s=SC[sc];
-  setD('H',`M380,300${zig(490,300,45,s.k,s.a)}H585`);
-  setD('F',`M440,555${zig(560,555,125,s.k,s.a)}H590`);
-  for(const k in P) P[k].f.setAttribute('stroke-dasharray',s.dash);
+  const v=VIS[sc];
+  setD('H',`M368,300${zig(490,300,45,v.k,v.a)}H585`);
+  setD('F',`M428,555${zig(560,555,125,v.k,v.a)}H590`);
   paint();
 }
 function paint(){
-  const cool=shown==='cool', s=SC[sc], st=pipingStatus(s.ft), fl=FLAG[st];
-  // state colors per mode; no pressure-drop fading is drawn
+  const m=getModeState(shown), cool=shown==='cool';
+  const r=evaluatePiping(SCENARIOS[sc].lengthFt), fl=FLAG[r.status];
+  // state colors follow the mode; no pressure-drop fading is drawn
   grad('gOC', cool?[C.hpL,C.hpV]:[C.lpL,C.lpV]);          // y465 (expansion side) -> y300 (valve side)
   grad('gG',  cool?[C.lpL,C.lpV]:[C.hpL,C.hpV]);          // y125 (liquid line side) -> y45 (gas line side)
-  setFill('H', cool?C.lpV:C.hpV);                          // gas line: suction in cooling, discharge in heating
-  setFill('F', cool?C.lpL:C.hpL);                          // liquid line: mixture in cooling, liquid in heating
-  $('tA').textContent=cool?'LOW SIDE':'HIGH SIDE';
-  $('tB').textContent=cool?'Evaporator (low side)':'Condenser (high side)';
-  $('rDis').textContent='High side'; $('rSuc').textContent='Low side';
-  const ok=st==='ok';
-  $('rDP').textContent=st==='above'?OUT_OF_SPEC:'Not calculated';
-  if(st==='above'){ $('rCap').textContent=OUT_OF_SPEC; $('rCapN').textContent='Capacity'; }
-  else if(s.ft===SPEC.ratedFt){
-    $('rCap').textContent=(cool?SPEC.ratedCoolBtuh:SPEC.ratedHeatBtuh).toLocaleString('en-US')+' Btu/h rated';
-    $('rCapN').textContent='Published rating at 25 ft, '+(cool?'cooling: '+SPEC.ratedCoolCond:'heating: '+SPEC.ratedHeatCond)+'. Field capacity varies.';
+  P.H.t.setAttribute('stroke', cool?C.lpV:C.hpV);          // gas line: suction in cooling, discharge in heating
+  P.F.t.setAttribute('stroke', cool?C.lpL:C.hpL);          // liquid line: mixture in cooling, liquid in heating
+  DIRS.forEach(d=>d.el.setAttribute('transform',`translate(${d.x} ${d.y}) rotate(${cool?d.c:d.h})`));
+  $('tOut').textContent='Outdoor coil: '+m.outdoorCoilRole;
+  $('tIn').textContent='Indoor coil: '+m.indoorCoilRole;
+  $('rDis').textContent=m.compressorDischarge.charAt(0).toUpperCase()+m.compressorDischarge.slice(1);
+  $('rSuc').textContent=m.compressorSuction.charAt(0).toUpperCase()+m.compressorSuction.slice(1);
+  $('rDP').textContent=r.overMaximum?NOT_CALCULATED:'Not modeled';
+  if(r.overMaximum){ $('rCap').textContent=NOT_CALCULATED; $('rCapN').textContent='Capacity'; }
+  else if(r.lengthFt===SPEC.ratedPipingFt){
+    $('rCap').textContent=(cool?SPEC.ratedCoolingBtuh:SPEC.ratedHeatingBtuh).toLocaleString('en-US')+' Btu/h';
+    $('rCapN').textContent='Manufacturer rating, not a live value. Rated at 25 ft, '+(cool?'cooling: '+SPEC.ratedCoolingConditions:'heating: '+SPEC.ratedHeatingConditions)+'.';
   } else { $('rCap').textContent='Not modeled'; $('rCapN').textContent='Capacity'; }
-  const oz=extraChargeOz(s.ft);
-  $('rChg').textContent = oz===null ? OUT_OF_SPEC : oz===0 ? 'None for piping length' : oz.toFixed(1)+' oz';
+  $('rChg').textContent=r.additionalChargeDisplay;
+  $('rFac').textContent=SPEC.factoryChargeLb.toFixed(2)+' lb';
   $('flag').className='flag '+fl.cls; $('flag').textContent=fl.txt;
   $('warn').setAttribute('display',fl.svg?'inline':'none');
   if(fl.svg){ $('warnTx').textContent=fl.svg; $('warnBg').setAttribute('fill',fl.fill); }
-  $('mMode').textContent=MSG_MODE[shown]; $('mSc').textContent=MSG_SC[sc];
+  $('mMode').textContent=MSG_MODE[shown]; $('mSc').textContent=MSG_SC[sc]; $('mNote').textContent=MSG_NOTE;
 }
 function setMode(m){
   mode=m;
-  const c=m==='cool';
-  P.OC.tdir=P.F.tdir=P.G.tdir=c?1:-1; P.H.tdir=c?-1:1;
+  P.OC.tdir=P.F.tdir=P.G.tdir=m==='cool'?1:-1; P.H.tdir=m==='cool'?-1:1;
   document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m));
-  setTimeout(()=>{shown=m;paint();},350);                 // recolor as flow passes through zero
+  clearTimeout(modeTimer);
+  modeTimer=setTimeout(()=>{shown=mode;paint();},350);     // recolor as flow passes through zero
 }
 function setSc(k){sc=k;document.querySelectorAll('[data-sc]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sc===k));build();}
+function setPaused(p){paused=p;const b=$('bPause');b.setAttribute('data-paused',p);b.textContent=p?'Resume animation':'Pause animation';}
+
+/* Button text comes from SCENARIOS so labels always match the calculated length. */
+document.querySelectorAll('[data-sc]').forEach(b=>{const s=SCENARIOS[b.dataset.sc];b.textContent=`${s.name} \u00B7 ${s.lengthFt} ft`;b.onclick=()=>setSc(b.dataset.sc);});
 document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
-document.querySelectorAll('[data-sc]').forEach(b=>b.onclick=()=>setSc(b.dataset.sc));
 $('bLab').onclick=e=>{const on=e.target.getAttribute('aria-pressed')!=='true';e.target.setAttribute('aria-pressed',on);$('labels').setAttribute('display',on?'inline':'none');};
-$('bPause').onclick=e=>{paused=!paused;e.target.setAttribute('aria-pressed',paused);e.target.textContent=paused?'Play':'Pause';};
-if(matchMedia('(prefers-reduced-motion: reduce)').matches){paused=true;$('bPause').setAttribute('aria-pressed',true);$('bPause').textContent='Play';}
+$('bPause').onclick=()=>setPaused(!paused);
+if(matchMedia('(prefers-reduced-motion: reduce)').matches) setPaused(true);
 
 let last=0, ang=0, ph=0, spool=290;
 function frame(ts){
   const dt=Math.min(.05,(ts-last)/1000||0); last=ts;
   const cool=mode==='cool';
+  // direction and valve position keep settling even while paused, so a mode change is never stale
+  for(const k in P){const p=P[k]; p.dir+=(p.tdir-p.dir)*Math.min(1,dt*4);}
+  spool+=((cool?290:340)-spool)*Math.min(1,dt*6); $('spool').setAttribute('x',spool);
   if(!paused){
-    for(const k in P){const p=P[k]; p.dir+=(p.tdir-p.dir)*Math.min(1,dt*4);
-      p.off-=p.dir*SPEED*(k==='F'?.6:1)*dt; p.f.setAttribute('stroke-dashoffset',p.off);}
+    for(const k in P){const p=P[k]; p.off-=p.dir*SPEED*(k==='F'?.6:1)*dt; p.f.setAttribute('stroke-dashoffset',p.off);}
     ang+=300*dt; ph+=dt*38;
     $('fan').setAttribute('transform',`rotate(${ang} 140 382)`);
     $('blower').setAttribute('stroke-dashoffset',-ph*1.5);
-    spool+=((cool?290:340)-spool)*Math.min(1,dt*6); $('spool').setAttribute('x',spool);
     const cold='#7cc8ff', hot='#ff7a55', ind=cool?cold:hot, out=cool?hot:cold, m=ph%36;
     arrows.forEach(a=>{
       if(a.t==='ind') a.el.setAttribute('transform',`translate(${a.x} ${185+m})`);
