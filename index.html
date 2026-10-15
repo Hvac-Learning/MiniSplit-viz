@@ -33,6 +33,7 @@
   <linearGradient id="gOC" gradientUnits="userSpaceOnUse" x1="0" y1="465" x2="0" y2="300"><stop offset="0"/><stop offset="1"/></linearGradient>
   <linearGradient id="gG"  gradientUnits="userSpaceOnUse" x1="0" y1="125" x2="0" y2="45"><stop offset="0"/><stop offset="1"/></linearGradient>
   <linearGradient id="gH"  gradientUnits="userSpaceOnUse" x1="380" y1="300" x2="585" y2="45"><stop offset="0"/><stop offset="1"/></linearGradient>
+  <linearGradient id="gJ"  gradientUnits="userSpaceOnUse" x1="0" y1="312" x2="0" y2="520"><stop offset="0"/><stop offset="1"/></linearGradient>
   <linearGradient id="gF"  gradientUnits="userSpaceOnUse" x1="440" y1="555" x2="590" y2="125"><stop offset="0"/><stop offset="1"/></linearGradient>
   <filter id="turb" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence id="tb" type="turbulence" baseFrequency=".12" numOctaves="1" seed="1"/><feDisplacementMap in="SourceGraphic" scale="9"/></filter>
 </defs>
@@ -148,7 +149,7 @@ const PATHS = {
   G:'M590,125H925V98H605V71H925V45H585',                              // indoor coil
   J:'M355,312V400H390V520H350'                                        // RV -> accumulator -> compressor
 };
-const FILL = {A:C.hpV, OC:'url(#gOC)', G:'url(#gG)', J:C.lpV, F:'url(#gF)', H:'url(#gH)'};
+const FILL = {A:C.hpV, OC:'url(#gOC)', G:'url(#gG)', J:'url(#gJ)', F:'url(#gF)', H:'url(#gH)'};
 const P = {};
 function mkPipe(k){
   const g=document.createElementNS(NS,'g'), mk=(cls)=>{const e=document.createElementNS(NS,'path');e.setAttribute('fill','none');e.setAttribute('stroke-linejoin','round');g.appendChild(e);return e;};
@@ -170,6 +171,8 @@ const arrows=[];
 [[360],[430]].forEach(([y])=>arrows.push({y,t:'oout'}));
 arrows.forEach(a=>{const p=document.createElementNS(NS,'path');p.setAttribute('d','M-6,-14H6V0H12L0,16L-12,0H-6Z');$('air').appendChild(p);a.el=p;});
 
+const LT='#e6eef5';
+const mix=(a,b,t)=>{const p=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)),x=p(a),y=p(b);return '#'+x.map((v,i)=>Math.round(v+(y[i]-v)*t).toString(16).padStart(2,'0')).join('');};
 function grad(id,[c0,c1],o0=1,o1=1){const s=$(id).children;s[0].setAttribute('stop-color',c0);s[1].setAttribute('stop-color',c1);s[0].setAttribute('stop-opacity',o0);s[1].setAttribute('stop-opacity',o1);}
 
 function build(){ // lineset geometry for chosen length
@@ -184,11 +187,16 @@ function build(){ // lineset geometry for chosen length
 function paint(){
   const cool=shown==='cool', s=SC[sc], n=NOM[shown];
   grad('gOC', cool?[C.hpL,C.hpV]:[C.lpL,C.lpV]);          // y465 (liquid) -> y300 (vapor)
-  grad('gG',  cool?[C.lpL,C.lpV]:[C.hpL,C.hpV]);          // y125 (liquid) -> y45 (vapor)
-  const fv=s.dP*.085, fl=s.dP*.6*.085;                     // pressure drop shown as fade
-  const vUp=cool?1:0, lUp=cool?0:1;                       // upstream (high-P) end: 0=start 1=end
-  grad('gH',[cool?C.lpV:C.hpV,cool?C.lpV:C.hpV], vUp?1-fv:1, vUp?1:1-fv);
-  grad('gF',[cool?C.lpL:C.hpL,cool?C.lpL:C.hpL], lUp?1-fl:1, lUp?1:1-fl);
+  const fv=Math.min(.7,s.dP*.085), fl=s.dP*.07;            // pressure drop shown as lightening along the flow
+  if(cool){
+    const hRV=mix(C.lpV,LT,fv), fEnd=mix(C.lpL,LT,fl);
+    grad('gH',[hRV,C.lpV]); grad('gJ',[hRV,mix(C.lpV,LT,fv*1.3)]);
+    grad('gF',[C.lpL,fEnd]); grad('gG',[fEnd,C.lpV]);
+  } else {
+    const hEnd=mix(C.hpV,LT,fv), fStart=mix(C.hpL,LT,fl);
+    grad('gH',[C.hpV,hEnd]); grad('gJ',[C.lpV,C.lpV]);
+    grad('gF',[fStart,C.hpL]); grad('gG',[C.hpL,hEnd]);
+  }
   const dp=s.dP, pOut = cool? n.ps-dp : n.pd-1, pIn = cool? n.ps : n.pd-1-dp;
   $('tA').textContent=pOut.toFixed(1)+' psig'; $('tB').textContent=pIn.toFixed(1)+' psig';
   $('rDis').textContent=n.pd+' psig';
