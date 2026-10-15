@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Interactive animation of a ductless mini-split refrigeration cycle: cooling and heating modes, reversing valve, and the effect of lineset length.">
+<title>Mini-Split Refrigeration Cycle</title>
+<style>
+  :root{--navy:#141848;--yel:#f5e12a;--bg:#0b1320;--ink:#e8eef6}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Arial Narrow","Helvetica Neue",Arial,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:12px}
+  svg{width:100%;height:auto;display:block;border-radius:10px}
+  .bar{display:flex;flex-wrap:wrap;gap:14px;margin:12px 0;align-items:center}
+  .seg{display:flex;border:2px solid var(--navy);border-radius:8px;overflow:hidden}
+  button{font-weight:700;font-size:15px;font-family:inherit;background:var(--navy);color:#fff;border:0;padding:10px 16px;cursor:pointer}
+  button[aria-pressed="true"]{background:var(--yel);color:var(--navy)}
+  button:focus-visible{outline:3px solid #fff;outline-offset:-3px}
+  .tool{border:2px solid var(--navy);border-radius:8px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+  .stat{background:#121c2e;border-left:4px solid var(--yel);padding:8px 10px;border-radius:4px}
+  .stat b{display:block;font-size:22px}.stat span{font-size:12px;opacity:.75}
+  #msg{margin:10px 0 0;font-size:16px;line-height:1.4;max-width:80ch;min-height:3.8em}
+  .tag{font:700 12px Arial,sans-serif;fill:#fff;paint-order:stroke;stroke:#0b1220;stroke-width:3}
+  .lbl{font:700 12px Arial,sans-serif;fill:#fff;paint-order:stroke;stroke:#0b1220;stroke-width:3}
+</style>
+</head>
+<body>
+<div class="wrap">
+<svg id="s" viewBox="0 0 1000 640" role="img" aria-label="Animated mini-split refrigerant cycle">
+<defs>
+  <pattern id="sd" width="10" height="22" patternUnits="userSpaceOnUse"><rect width="10" height="22" fill="#2a3b50"/><rect y="19" width="10" height="3" fill="#1a2738"/></pattern>
+  <linearGradient id="gOC" gradientUnits="userSpaceOnUse" x1="0" y1="465" x2="0" y2="300"><stop offset="0"/><stop offset="1"/></linearGradient>
+  <linearGradient id="gG"  gradientUnits="userSpaceOnUse" x1="0" y1="125" x2="0" y2="45"><stop offset="0"/><stop offset="1"/></linearGradient>
+  <linearGradient id="gH"  gradientUnits="userSpaceOnUse" x1="380" y1="300" x2="585" y2="45"><stop offset="0"/><stop offset="1"/></linearGradient>
+  <linearGradient id="gF"  gradientUnits="userSpaceOnUse" x1="440" y1="555" x2="590" y2="125"><stop offset="0"/><stop offset="1"/></linearGradient>
+  <filter id="turb" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence id="tb" type="turbulence" baseFrequency=".12" numOctaves="1" seed="1"/><feDisplacementMap in="SourceGraphic" scale="9"/></filter>
+</defs>
+
+<rect width="1000" height="640" fill="#a9c7dc"/>
+<rect width="530" height="640" fill="url(#sd)"/>
+<rect x="530" y="600" width="470" height="40" fill="#8f9aa3"/>
+<rect x="10" y="590" width="500" height="50" fill="#1c2430"/>
+
+<!-- Indoor unit -->
+<rect x="560" y="20" width="390" height="150" rx="28" fill="#dfe4e8" stroke="#aab2b9" stroke-width="3"/>
+<rect x="575" y="32" width="360" height="108" rx="16" fill="#2f3b49"/>
+<rect x="580" y="144" width="350" height="18" rx="9" fill="#10151c"/>
+<path id="blower" d="M592,153H918" stroke="#8b96a3" stroke-width="12" stroke-dasharray="6 6"/>
+
+<!-- Outdoor unit -->
+<rect x="30" y="238" width="440" height="352" rx="10" fill="#cdbf98"/>
+<rect x="42" y="262" width="416" height="316" rx="6" fill="#2c3644"/>
+<rect x="30" y="238" width="440" height="16" fill="#e0d3ab"/>
+
+<g id="pipes"></g>
+
+<!-- Fan -->
+<g id="fan"><circle cx="140" cy="382" r="74" fill="#dfe6ee" opacity=".12"/>
+  <g fill="#dfe6ee" opacity=".38"><ellipse cx="170" cy="382" rx="36" ry="14"/><ellipse cx="170" cy="382" rx="36" ry="14" transform="rotate(120 140 382)"/><ellipse cx="170" cy="382" rx="36" ry="14" transform="rotate(240 140 382)"/></g>
+  <circle cx="140" cy="382" r="9" fill="#9aa6b4"/></g>
+
+<!-- Compressor + accumulator -->
+<g id="comp"><rect x="285" y="380" width="60" height="155" rx="14" fill="#2b3340" stroke="#555f6e" stroke-width="2"/>
+  <rect x="285" y="425" width="60" height="42" fill="#c8672a"/><rect x="305" y="470" width="20" height="55" fill="#8a94a3"/></g>
+<rect x="375" y="440" width="30" height="95" rx="9" fill="#7ec3e8" opacity=".45" stroke="#cfe9f7" stroke-width="2"/>
+
+<!-- Reversing valve -->
+<rect x="280" y="288" width="100" height="24" rx="8" fill="#e0a040" stroke="#7a4d10" stroke-width="2"/>
+<rect id="spool" x="290" y="294" width="30" height="12" rx="4" fill="#4a2f08"/>
+
+<!-- EEV -->
+<circle id="eev" cx="420" cy="555" r="16" fill="#1a1a1a" stroke="#f5e12a" stroke-width="4"/>
+<rect x="412" y="533" width="16" height="10" fill="#333"/>
+
+<g id="air"></g>
+<g id="tags"><text id="tA" class="tag" x="396" y="280"></text><text id="tB" class="tag" x="598" y="36"></text></g>
+
+<!-- Legend -->
+<g transform="translate(610 262)"><rect width="350" height="108" rx="6" fill="#fff" opacity=".93" stroke="#333"/>
+  <text x="14" y="20" font-family="Arial" font-weight="700" font-size="13" fill="#111">Refrigerant states</text>
+  <g font-family="Arial" font-size="12" fill="#111">
+    <rect x="14" y="30" width="46" height="9" rx="4" fill="#2a3fb0"/><text x="70" y="39">Low pressure, low temp liquid</text>
+    <rect x="14" y="50" width="46" height="9" rx="4" fill="#6ec6f0"/><text x="70" y="59">Low pressure, low temp vapor</text>
+    <rect x="14" y="70" width="46" height="9" rx="4" fill="#ff2a1f"/><text x="70" y="79">High pressure, high temp liquid</text>
+    <rect x="14" y="90" width="46" height="9" rx="4" fill="#8a0f12"/><text x="70" y="99">High pressure, high temp vapor</text></g></g>
+
+<g id="labels" display="none">
+  <text class="lbl" x="315" y="574" text-anchor="middle">Compressor</text>
+  <text class="lbl" x="330" y="280" text-anchor="middle" display="none">Reversing valve</text>
+  <text class="lbl" x="150" y="286" text-anchor="middle">Outdoor coil</text>
+  <text class="lbl" x="420" y="580" text-anchor="middle">EEV</text>
+  <text class="lbl" x="480" y="200" text-anchor="end">Vapor line</text>
+  <text class="lbl" x="585" y="225">Liquid line</text>
+  <text class="lbl" x="330" y="338" text-anchor="middle">Reversing valve</text>
+  <text class="lbl" x="800" y="28" fill="#fff">Indoor coil</text>
+</g>
+</svg>
+
+<div class="bar">
+  <div class="seg" role="group" aria-label="Mode">
+    <button data-mode="heat" aria-pressed="false">Heating</button>
+    <button data-mode="cool" aria-pressed="true">Cooling</button>
+  </div>
+  <div class="seg" role="group" aria-label="Lineset length">
+    <button data-sc="short" aria-pressed="false">Too short · 8 ft</button>
+    <button data-sc="good" aria-pressed="true">Good · 25 ft</button>
+    <button data-sc="long" aria-pressed="false">Long · 66 ft</button>
+  </div>
+  <button class="tool" id="bLab" aria-pressed="false">Labels</button>
+  <button class="tool" id="bPause" aria-pressed="false">Pause</button>
+</div>
+<div class="stats">
+  <div class="stat"><b id="rDis">–</b><span>Compressor discharge</span></div>
+  <div class="stat"><b id="rSuc">–</b><span>Compressor suction</span></div>
+  <div class="stat"><b id="rDP">–</b><span>Vapor-line pressure drop</span></div>
+  <div class="stat"><b id="rCap">–</b><span>Capacity (illustrative)</span></div>
+  <div class="stat"><b id="rChg">–</b><span>Extra R-32 to add</span></div>
+</div>
+<p id="msg" aria-live="polite"></p>
+</div>
+
+<script>
+/* ===== CONFIG: Daikin RXT12AVJU9 (R-32 inverter, 1 ton) =====
+   Published: factory charge 1.74 lb, max interunit piping 66 ft (Daikin submittal sheet).
+   Pre-charge length and 0.22 oz/ft are from the sibling RXV12AVJU9 listing: VERIFY against the
+   RXT12AVJU9 installation manual. Pressures/capacity below are illustrative teaching values. */
+const UNIT = {model:'RXT12AVJU9', precharge_ft:49, addOzPerFt:0.22};
+const NOM = {cool:{pd:395, ps:118}, heat:{pd:370, ps:82}};   // psig, typical
+const SC = {
+  short:{ft:8,  dP:1.0, cap:100, speed:95, k:0, a:0,  dash:'2 6',
+    msg:'8 ft: almost no pipe to absorb compressor pulses. Flow stays fast and turbulent, the EEV hunts, and the line hums and vibrates. With so little pipe volume, liquid can flood back to the compressor.'},
+  good:{ft:25,  dP:2.5, cap:100, speed:60, k:2, a:14, dash:'2 14',
+    msg:'25 ft: smooth, steady flow with a small pressure drop. The factory charge is right and the unit delivers rated capacity.'},
+  long:{ft:66,  dP:6.0, cap:91,  speed:42, k:6, a:20, dash:'2 22',
+    msg:'66 ft (maximum): friction makes the pressure fall along the vapor line (watch it fade). The compressor runs at a lower suction pressure, flow slows, capacity drops, oil returns slowly, and extra charge is needed.'}
+};
+const C = {hpV:'#8a0f12', hpL:'#ff2a1f', lpL:'#2a3fb0', lpV:'#6ec6f0'};
+const $ = id => document.getElementById(id), NS = 'http://www.w3.org/2000/svg';
+let mode='cool', shown='cool', sc='good', paused=false;
+
+/* lineset path with k back-and-forth loops so longer = visibly longer */
+const zig=(x,y0,y1,k,a)=>{let d=`H${x}`,cur=y0;if(!k)return d+`V${y1}`;const s=(y0-y1)/(2*k+2);
+  for(let i=0;i<k;i++){cur-=s;d+=`V${cur}H${x+a}`;cur-=s;d+=`V${cur}H${x-a}`;}return d+`H${x}V${y1}`;};
+const PATHS = {
+  A:'M310,380V312',                                                   // discharge -> reversing valve
+  OC:'M280,300H60V355H220V410H60V465H220H250V555H404',                // RV -> outdoor coil -> EEV
+  G:'M590,125H925V98H605V71H925V45H585',                              // indoor coil
+  J:'M355,312V400H390V520H350'                                        // RV -> accumulator -> compressor
+};
+const FILL = {A:C.hpV, OC:'url(#gOC)', G:'url(#gG)', J:C.lpV, F:'url(#gF)', H:'url(#gH)'};
+const P = {};
+function mkPipe(k){
+  const g=document.createElementNS(NS,'g'), mk=(cls)=>{const e=document.createElementNS(NS,'path');e.setAttribute('fill','none');e.setAttribute('stroke-linejoin','round');g.appendChild(e);return e;};
+  const u=mk(), t=mk(), f=mk();
+  u.setAttribute('stroke','rgba(0,0,0,.4)'); u.setAttribute('stroke-width',15);
+  t.setAttribute('stroke',FILL[k]); t.setAttribute('stroke-width',10);
+  f.setAttribute('stroke','#fff'); f.setAttribute('stroke-opacity',.75); f.setAttribute('stroke-width',3.5); f.setAttribute('stroke-linecap','round');
+  $('pipes').appendChild(g);
+  P[k]={u,t,f,dir:1,tdir:1,off:0};
+}
+['OC','G','A','J','F','H'].forEach(mkPipe);
+for(const k in PATHS) setD(k,PATHS[k]);
+function setD(k,d){const p=P[k];p.u.setAttribute('d',d);p.t.setAttribute('d',d);p.f.setAttribute('d',d);}
+
+/* air arrows */
+const arrows=[];
+[[650,'in'],[770,'in'],[890,'in']].forEach(([x])=>arrows.push({x,t:'ind'}));
+[[110],[190]].forEach(([x])=>arrows.push({x,t:'oin'}));
+[[360],[430]].forEach(([y])=>arrows.push({y,t:'oout'}));
+arrows.forEach(a=>{const p=document.createElementNS(NS,'path');p.setAttribute('d','M-6,-14H6V0H12L0,16L-12,0H-6Z');$('air').appendChild(p);a.el=p;});
+
+function grad(id,[c0,c1],o0=1,o1=1){const s=$(id).children;s[0].setAttribute('stop-color',c0);s[1].setAttribute('stop-color',c1);s[0].setAttribute('stop-opacity',o0);s[1].setAttribute('stop-opacity',o1);}
+
+function build(){ // lineset geometry for chosen length
+  const s=SC[sc];
+  setD('H',`M380,300${zig(490,300,45,s.k,s.a)}H585`);
+  setD('F',`M440,555${zig(560,555,125,s.k,s.a)}H590`);
+  for(const k in P) P[k].f.setAttribute('stroke-dasharray',s.dash);
+  const sh=sc==='short';
+  ['F','H'].forEach(k=>P[k].f.setAttribute('filter',sh?'url(#turb)':''));
+  paint();
+}
+function paint(){
+  const cool=shown==='cool', s=SC[sc], n=NOM[shown];
+  grad('gOC', cool?[C.hpL,C.hpV]:[C.lpL,C.lpV]);          // y465 (liquid) -> y300 (vapor)
+  grad('gG',  cool?[C.lpL,C.lpV]:[C.hpL,C.hpV]);          // y125 (liquid) -> y45 (vapor)
+  const fv=s.dP*.085, fl=s.dP*.6*.085;                     // pressure drop shown as fade
+  const vUp=cool?1:0, lUp=cool?0:1;                       // upstream (high-P) end: 0=start 1=end
+  grad('gH',[cool?C.lpV:C.hpV,cool?C.lpV:C.hpV], vUp?1-fv:1, vUp?1:1-fv);
+  grad('gF',[cool?C.lpL:C.hpL,cool?C.lpL:C.hpL], lUp?1-fl:1, lUp?1:1-fl);
+  const dp=s.dP, pOut = cool? n.ps-dp : n.pd-1, pIn = cool? n.ps : n.pd-1-dp;
+  $('tA').textContent=pOut.toFixed(1)+' psig'; $('tB').textContent=pIn.toFixed(1)+' psig';
+  $('rDis').textContent=n.pd+' psig';
+  $('rSuc').textContent=(cool? n.ps-dp-1 : n.ps).toFixed(0)+' psig';
+  $('rDP').textContent=dp.toFixed(1)+' psi';
+  $('rCap').textContent=s.cap+'%';
+  const oz=Math.max(0,s.ft-UNIT.precharge_ft)*UNIT.addOzPerFt;
+  $('rChg').textContent=oz? oz.toFixed(1)+' oz':'none';
+  $('msg').textContent=(cool?'Cooling: indoor coil evaporates (absorbs heat), outdoor coil condenses. ':'Heating: the valve flips, so the indoor coil condenses (releases heat) and the outdoor coil evaporates. ')+s.msg;
+}
+function setMode(m){
+  mode=m;
+  const c=m==='cool';
+  P.OC.tdir=P.F.tdir=P.G.tdir=c?1:-1; P.H.tdir=c?-1:1;
+  document.querySelectorAll('[data-mode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m));
+  setTimeout(()=>{shown=m;paint();},350);                 // recolor as flow passes through zero
+}
+function setSc(k){sc=k;document.querySelectorAll('[data-sc]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.sc===k));build();}
+document.querySelectorAll('[data-mode]').forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+document.querySelectorAll('[data-sc]').forEach(b=>b.onclick=()=>setSc(b.dataset.sc));
+$('bLab').onclick=e=>{const on=e.target.getAttribute('aria-pressed')!=='true';e.target.setAttribute('aria-pressed',on);$('labels').setAttribute('display',on?'inline':'none');};
+$('bPause').onclick=e=>{paused=!paused;e.target.setAttribute('aria-pressed',paused);e.target.textContent=paused?'Play':'Pause';};
+if(matchMedia('(prefers-reduced-motion: reduce)').matches){paused=true;$('bPause').setAttribute('aria-pressed',true);$('bPause').textContent='Play';}
+
+let last=0, ang=0, ph=0, spool=290, frameN=0;
+function frame(ts){
+  const dt=Math.min(.05,(ts-last)/1000||0); last=ts;
+  const s=SC[sc], cool=mode==='cool', short=sc==='short';
+  if(!paused){
+    for(const k in P){const p=P[k]; p.dir+=(p.tdir-p.dir)*Math.min(1,dt*4);
+      p.off-=p.dir*s.speed*(k==='F'?.6:1)*dt; p.f.setAttribute('stroke-dashoffset',p.off);}
+    ang+=300*dt; ph+=dt*38; frameN++;
+    $('fan').setAttribute('transform',`rotate(${ang} 140 382)`);
+    $('blower').setAttribute('stroke-dashoffset',-ph*1.5);
+    if(short){ // pulsing, shaking, turbulent
+      const w=10+Math.sin(ts*.05)*1.8; P.F.t.setAttribute('stroke-width',w); P.H.t.setAttribute('stroke-width',w);
+      $('comp').setAttribute('transform',`translate(${(Math.random()-.5)*2.4} ${(Math.random()-.5)*2.4})`);
+      $('eev').setAttribute('stroke-width',4+Math.sin(ts*.03)*2.5);
+      if(frameN%3===0) $('tb').setAttribute('seed',frameN%60);
+    } else {P.F.t.setAttribute('stroke-width',10);P.H.t.setAttribute('stroke-width',10);$('comp').removeAttribute('transform');$('eev').setAttribute('stroke-width',4);}
+    spool+=((cool?290:340)-spool)*Math.min(1,dt*6); $('spool').setAttribute('x',spool);
+    const cold='#7cc8ff', hot='#ff7a55', ind=cool?cold:hot, out=cool?hot:cold, m=ph%36;
+    arrows.forEach(a=>{
+      if(a.t==='ind') a.el.setAttribute('transform',`translate(${a.x} ${185+m})`);
+      if(a.t==='oin') a.el.setAttribute('transform',`translate(${a.x} ${190+m*.9})`);
+      if(a.t==='oout')a.el.setAttribute('transform',`translate(${22-m*.6} ${a.y}) rotate(90) scale(.7)`);
+      a.el.setAttribute('fill',a.t==='ind'?ind:a.t==='oout'?out:'#dfe6ee');
+      a.el.setAttribute('opacity',(1-m/40)*.9);});
+  }
+  requestAnimationFrame(frame);
+}
+build(); setMode('cool'); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
